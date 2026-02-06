@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Cat Football - Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .time {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: #88dd88;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        .hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .meow-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 120px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .meow-bar-fill {
+            height: 20px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .meow-label {
+            color: white;
+            font-size: 11px;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
+            touch-action: manipulation;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            background: rgba(102, 126, 234, 0.9);
+        }
+
+        .joystick-area {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+        }
+
+        .joystick-base {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+        }
+
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #667eea;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .sprint-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 193, 7, 0.9);
+            border: 3px solid #FFC107;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
+            touch-action: manipulation;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .sprint-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 152, 0, 0.9);
+        }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: none;
+            pointer-events: none;
+            max-width: 80%;
+            z-index: 1000;
+        }
+
+        .message.show {
+            display: block;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .stamina-bar {
+            position: absolute;
+            bottom: 120px;
+            right: 20px;
+            width: 30px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .stamina-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, #4CAF50, #8BC34A);
+            transition: height 0.2s;
+        }
+
+        .tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 90%;
+            z-index: 2000;
+            display: none;
+        }
+
+        .tutorial.show {
+            display: block;
+        }
+
+        .tutorial h2 {
+            color: #FFC107;
+            margin-bottom: 15px;
+        }
+
+        .tutorial p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .tutorial button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 15px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score" id="score">0 - 0</div>
+            <div class="time" id="time">3:00</div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+
+            <div class="hud">
+                <div>Chain: <span id="chain">0</span></div>
+                <div>Bonus: <span id="bonus">+0%</span></div>
+            </div>
+
+            <div class="meow-bar">
+                <div class="meow-bar-fill" id="meowFill" style="width: 0%"></div>
+                <div class="meow-label" id="meowLevel">Level 0</div>
+            </div>
+
+            <div class="stamina-bar">
+                <div class="stamina-fill" id="staminaFill"></div>
+            </div>
+
+            <!-- Virtual Joystick -->
+            <div class="joystick-area" id="joystickArea">
+                <div class="joystick-base">
+                    <div class="joystick-stick" id="joystickStick"></div>
+                </div>
+            </div>
+
+            <!-- Sprint Button -->
+            <div class="sprint-btn" id="sprintBtn">⚡</div>
+
+            <!-- Action Buttons -->
+            <div class="controls">
+                <div class="control-btn" id="shootBtn">⚽</div>
+                <div class="control-btn" id="powerBtn">💥</div>
+            </div>
+
+            <div class="message" id="message"></div>
+        </div>
+    </div>
+
+    <div class="tutorial show" id="tutorial">
+        <h2>🐱 Cat Football ⚽</h2>
+        <p><strong>Controls:</strong></p>
+        <p>🕹️ Left joystick - Move your cat</p>
+        <p>⚡ Right button - Sprint (hold)</p>
+        <p>⚽ Bottom buttons - Shoot/Pass</p>
+        <p>💥 Power button - Stronger kick</p>
+        <p><strong>Goal:</strong> Score more goals than AI before time runs out!</p>
+        <p><strong>Meowmentum:</strong> Build chains to get speed boosts!</p>
+        <button onclick="startGame()">Start Playing! 🎮</button>
+    </div>
+
+    <script src="mobile-game.js"></script>
+</body>
+</html>
