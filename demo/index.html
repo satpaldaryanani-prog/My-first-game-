@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Football - Playable Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-header h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .game-header p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        #gameCanvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background: #88dd88;
+            cursor: crosshair;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .info-panel {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 200px;
+        }
+
+        .info-panel h3 {
+            color: #667eea;
+            font-size: 1em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 2px solid #ffc107;
+        }
+
+        .controls h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .controls ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .controls li {
+            padding: 5px 0;
+            color: #856404;
+        }
+
+        .controls kbd {
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            margin-right: 5px;
+        }
+
+        .meowmentum-bar {
+            height: 25px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .meowmentum-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            border-radius: 12px;
+        }
+
+        .meowmentum-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .score-display {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 5px;
+            color: #155724;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🐱 Cat Football ⚽</h1>
+            <p>Mofusland-Inspired Mobile Football Game - Playable Demo</p>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="game-info">
+            <div class="info-panel">
+                <h3>⚽ Match Info</h3>
+                <div class="score-display" id="scoreDisplay">0 - 0</div>
+                <div class="stat-row">
+                    <span class="stat-label">Time:</span>
+                    <span class="stat-value" id="timeDisplay">3:00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Possession:</span>
+                    <span class="stat-value" id="possessionDisplay">None</span>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>✨ Meowmentum Chain</h3>
+                <div class="meowmentum-bar">
+                    <div class="meowmentum-fill" id="meowmentumFill" style="width: 0%"></div>
+                    <div class="meowmentum-text" id="meowmentumText">Level 0</div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Chain:</span>
+                    <span class="stat-value" id="chainDisplay">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Bonus:</span>
+                    <span class="stat-value" id="bonusDisplay">+0%</span>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>😸 Player Stats</h3>
+                <div class="stat-row">
+                    <span class="stat-label">Stamina:</span>
+                    <span class="stat-value" id="staminaDisplay">100%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Speed:</span>
+                    <span class="stat-value" id="speedDisplay">5.0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value" id="statusDisplay">Normal</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="controls">
+            <h3>🎮 Controls</h3>
+            <ul>
+                <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> - Move your cat</li>
+                <li><kbd>Shift</kbd> - Sprint (drains stamina)</li>
+                <li><kbd>Space</kbd> - Pass/Shoot (when you have the ball)</li>
+                <li><kbd>E</kbd> - Power Kick (stronger shot)</li>
+                <li><kbd>R</kbd> - Restart Match</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
