@@ -231,7 +231,7 @@ document.getElementById('meowLevel').textContent=`Level ${gameState.meowmentumLe
 const sp=(player.stamina/STAMINA_MAX)*100;
 document.getElementById('staminaFill').style.height=`${sp}%`}
 function render(){ctx.fillStyle='#88dd88';ctx.fillRect(0,0,canvas.width,canvas.height);
-drawField();drawGoals();drawBall();drawCat(player);drawCat(ai);
+drawField();drawGoals();drawCat(player);drawCat(ai);drawBall();
 if(gameState.meowmentumLevel>0)drawMeowmentumEffect(player)}
 function drawField(){ctx.strokeStyle='white';ctx.lineWidth=2;ctx.beginPath();
 ctx.moveTo(canvas.width/2,0);ctx.lineTo(canvas.width/2,canvas.height);ctx.stroke();
