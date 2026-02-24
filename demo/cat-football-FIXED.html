@@ -172,7 +172,7 @@ if(d>5){ai.vx=(dx/d)*ai.speed;ai.vy=(dy/d)*ai.speed}else{ai.vx=0;ai.vy=0}
 ai.x+=ai.vx;ai.y+=ai.vy;ai.x=Math.max(ai.radius,Math.min(canvas.width-ai.radius,ai.x));
 ai.y=Math.max(ai.radius,Math.min(canvas.height-ai.radius,ai.y));
 if(ai.hasBall){aiShootCooldown-=dt;if(aiShootCooldown<=0){shootBall(ai,1);aiShootCooldown=AI_SHOOT_DELAY}
-ball.x=ai.x;ball.y=ai.y}}
+else{ball.x=ai.x;ball.y=ai.y}}}
 function updateBall(){if(ball.possessed)return;ball.vx*=BALL_FRICTION;ball.vy*=BALL_FRICTION;
 if(Math.abs(ball.vx)<0.1)ball.vx=0;if(Math.abs(ball.vy)<0.1)ball.vy=0;
 ball.x+=ball.vx;ball.y+=ball.vy;
