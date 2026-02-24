@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>🐱 Cat Football ⚽</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;
+            position: fixed; width: 100%; height: 100%; }
+        .game-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
+        .game-header { background: rgba(255, 255, 255, 0.95); padding: 8px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .score { font-size: 24px; font-weight: bold; color: #667eea; }
+        .time { font-size: 18px; color: #666; }
+        .canvas-container { flex: 1; position: relative; background: #88dd88; overflow: hidden; }
+        #gameCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+        .hud { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.7);
+            color: white; padding: 8px 12px; border-radius: 8px; font-size: 14px; pointer-events: none; }
+        .meow-bar { position: absolute; top: 10px; right: 10px; width: 120px;
+            background: rgba(0, 0, 0, 0.7); padding: 8px; border-radius: 8px; pointer-events: none; }
+        .meow-bar-fill { height: 20px; background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px; transition: width 0.3s; }
+        .meow-label { color: white; font-size: 11px; margin-top: 4px; text-align: center; }
+        .stamina-bar { position: absolute; bottom: 120px; right: 20px; width: 30px; height: 120px;
+            background: rgba(0, 0, 0, 0.5); border-radius: 15px; overflow: hidden; pointer-events: none; }
+        .stamina-fill { width: 100%; height: 100%; background: linear-gradient(to top, #4CAF50, #8BC34A);
+            transition: height 0.2s; }
+        .joystick-area { position: absolute; bottom: 20px; left: 20px; width: 120px; height: 120px;
+            pointer-events: auto; }
+        .joystick-base { width: 120px; height: 120px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3); border: 3px solid rgba(255, 255, 255, 0.5); position: relative; }
+        .joystick-stick { width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #667eea; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); transition: all 0.1s; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .sprint-btn { position: absolute; bottom: 20px; right: 20px; width: 80px; height: 80px;
+            border-radius: 50%; background: rgba(255, 193, 7, 0.9); border: 3px solid #FFC107;
+            display: flex; align-items: center; justify-content: center; font-size: 36px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); pointer-events: auto; touch-action: manipulation;
+            font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .sprint-btn:active { transform: scale(0.95); background: rgba(255, 152, 0, 0.9); }
+        .controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: none; }
+        .control-btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #667eea; display: flex; align-items: center; justify-content: center;
+            font-size: 32px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); pointer-events: auto;
+            touch-action: manipulation; cursor: pointer; user-select: none; }
+        .control-btn:active { transform: scale(0.95); background: rgba(102, 126, 234, 0.9); }
+        .message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95); padding: 20px 30px; border-radius: 15px;
+            font-size: 18px; font-weight: bold; color: #667eea; text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: none; pointer-events: auto;
+            max-width: 80%; z-index: 1000; }
+        .message.show { display: block; animation: popIn 0.3s ease-out; }
+        @keyframes popIn { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        .tutorial { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95); color: white; padding: 20px; border-radius: 15px;
+            max-width: 90%; z-index: 2000; }
+        .tutorial h2 { color: #FFC107; margin-bottom: 15px; font-size: 24px; text-align: center; }
+        .tutorial p { margin: 10px 0; line-height: 1.6; }
+        .tutorial button { background: #667eea; color: white; border: none; padding: 15px 30px;
+            border-radius: 8px; font-size: 18px; margin-top: 15px; width: 100%; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score" id="score">0 - 0</div>
+            <div class="time" id="time">3:00</div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+            <div class="hud">
+                <div>Chain: <span id="chain">0</span></div>
+                <div>Bonus: <span id="bonus">+0%</span></div>
+            </div>
+            <div class="meow-bar">
+                <div class="meow-bar-fill" id="meowFill" style="width: 0%"></div>
+                <div class="meow-label" id="meowLevel">Level 0</div>
+            </div>
+            <div class="stamina-bar"><div class="stamina-fill" id="staminaFill"></div></div>
+            <div class="joystick-area" id="joystickArea">
+                <div class="joystick-base"><div class="joystick-stick" id="joystickStick"></div></div>
+            </div>
+            <div class="sprint-btn" id="sprintBtn">⚡</div>
+            <div class="controls">
+                <div class="control-btn" id="shootBtn">⚽</div>
+                <div class="control-btn" id="powerBtn">💥</div>
+            </div>
+            <div class="message" id="message"></div>
+        </div>
+    </div>
+    <div class="tutorial" id="tutorial" style="display: block;">
+        <h2>🐱 Cat Football ⚽</h2>
+        <p><strong>🕹️ Left joystick</strong> - Move your cat</p>
+        <p><strong>⚡ Right button</strong> - Sprint (hold)</p>
+        <p><strong>⚽ Bottom left</strong> - Shoot/Pass</p>
+        <p><strong>💥 Bottom right</strong> - Power kick</p>
+        <p><strong>🎯 Goal:</strong> Score by SHOOTING the ball into the goal!</p>
+        <p><strong>⚡ Meowmentum:</strong> Build chains for speed boosts!</p>
+        <button onclick="startGame()">🎮 START PLAYING!</button>
+    </div>
+    <script>
+const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+function resizeCanvas(){const c=canvas.parentElement;canvas.width=c.clientWidth;canvas.height=c.clientHeight}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+const MATCH_DURATION=180,BALL_RADIUS=8,CAT_RADIUS=15,BALL_MAX_SPEED=12,CAT_BASE_SPEED=3,
+CAT_SPRINT_MULTIPLIER=1.8,STAMINA_MAX=100,STAMINA_DRAIN_RATE=15,STAMINA_REGEN_RATE=10,
+BALL_FRICTION=0.97,MEOWMENTUM_THRESHOLDS=[3,6,10,15,20];
+let gameStarted=false,lastFrameTime=Date.now(),messageTimeout=null;
+let gameState={matchTime:MATCH_DURATION,homeScore:0,awayScore:0,matchInProgress:true,
+meowmentumChain:0,meowmentumLevel:0,lastActionTime:Date.now()};
+let ball={x:0,y:0,vx:0,vy:0,radius:BALL_RADIUS,possessed:false,possessor:null};
+let player={x:0,y:0,vx:0,vy:0,radius:CAT_RADIUS,stamina:STAMINA_MAX,speed:CAT_BASE_SPEED,
+name:"You",color:"#FF8C42",hasBall:false};
+let ai={x:0,y:0,vx:0,vy:0,radius:CAT_RADIUS,stamina:STAMINA_MAX,speed:CAT_BASE_SPEED*0.8,
+name:"AI",color:"#6C5CE7",hasBall:false};
+let joystickActive=false,joystickInput={x:0,y:0},isSprinting=false;
+const joystickArea=document.getElementById('joystickArea'),
+joystickStick=document.getElementById('joystickStick'),
+sprintBtn=document.getElementById('sprintBtn'),
+shootBtn=document.getElementById('shootBtn'),powerBtn=document.getElementById('powerBtn');
+let joystickTouch=null,joystickCenter={x:60,y:60},joystickRadius=35;
+joystickArea.addEventListener('touchstart',e=>{e.preventDefault();joystickTouch=e.touches[0].identifier;
+joystickActive=true;updateJoystick(e.touches[0])},{passive:false});
+joystickArea.addEventListener('touchmove',e=>{e.preventDefault();if(!joystickActive)return;
+for(let t of e.touches)if(t.identifier===joystickTouch){updateJoystick(t);break}},{passive:false});
+joystickArea.addEventListener('touchend',e=>{e.preventDefault();joystickActive=false;
+joystickInput={x:0,y:0};joystickStick.style.transform='translate(-50%, -50%)'},{passive:false});
+function updateJoystick(t){const r=joystickArea.getBoundingClientRect(),
+x=t.clientX-r.left-joystickCenter.x,y=t.clientY-r.top-joystickCenter.y,
+d=Math.sqrt(x*x+y*y),a=Math.atan2(y,x),cd=Math.min(d,joystickRadius);
+joystickInput.x=Math.cos(a)*(cd/joystickRadius);joystickInput.y=Math.sin(a)*(cd/joystickRadius);
+const sx=Math.cos(a)*cd,sy=Math.sin(a)*cd;
+joystickStick.style.transform=`translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px))`}
+function setSprint(s){isSprinting=s;sprintBtn.style.background=s?'rgba(255, 152, 0, 0.9)':'rgba(255, 193, 7, 0.9)'}
+sprintBtn.addEventListener('touchstart',e=>{e.preventDefault();setSprint(true)});
+sprintBtn.addEventListener('touchend',e=>{e.preventDefault();setSprint(false)});
+sprintBtn.addEventListener('touchcancel',e=>{e.preventDefault();setSprint(false)});
+shootBtn.addEventListener('touchstart',e=>{e.preventDefault();
+if(player.hasBall){shootBall(player,1);addMeowmentumChain(2,"Shot!")}});
+powerBtn.addEventListener('touchstart',e=>{e.preventDefault();
+if(player.hasBall){shootBall(player,1.5);addMeowmentumChain(2,"Power!")}});
+function startGame(){document.getElementById('tutorial').style.display='none';
+gameStarted=true;lastFrameTime=Date.now();initGame();gameLoop()}
+function initGame(){ball.x=canvas.width/2;ball.y=canvas.height/2;
+player.x=canvas.width*0.2;player.y=canvas.height/2;
+ai.x=canvas.width*0.8;ai.y=canvas.height/2;showMessage("⚽ Match started!")}
+function gameLoop(){if(!gameStarted)return;update();render();requestAnimationFrame(gameLoop)}
+function update(){if(!gameState.matchInProgress)return;
+const now=Date.now(),dt=(now-lastFrameTime)/1000;lastFrameTime=now;
+gameState.matchTime-=dt;if(gameState.matchTime<=0){gameState.matchTime=0;endMatch()}
+updatePlayerInput(dt);updateAI();updateBall();checkBallPossession();checkGoals();
+updateMeowmentum(dt);updateUI()}
+function updatePlayerInput(dt){let mx=joystickInput.x,my=joystickInput.y,cs=player.speed;
+if(isSprinting&&player.stamina>0){cs*=CAT_SPRINT_MULTIPLIER;
+player.stamina-=STAMINA_DRAIN_RATE*dt;if(player.stamina<0)player.stamina=0}
+else{player.stamina+=STAMINA_REGEN_RATE*dt;if(player.stamina>STAMINA_MAX)player.stamina=STAMINA_MAX}
+const mb=getMeowmentumBonus();cs*=(1+mb);player.vx=mx*cs;player.vy=my*cs;
+player.x+=player.vx;player.y+=player.vy;
+player.x=Math.max(player.radius,Math.min(canvas.width-player.radius,player.x));
+player.y=Math.max(player.radius,Math.min(canvas.height-player.radius,player.y));
+if(player.hasBall){ball.x=player.x;ball.y=player.y}}
+function updateAI(){const dx=ball.x-ai.x,dy=ball.y-ai.y,d=Math.sqrt(dx*dx+dy*dy);
+if(d>5){ai.vx=(dx/d)*ai.speed;ai.vy=(dy/d)*ai.speed}else{ai.vx=0;ai.vy=0}
+ai.x+=ai.vx;ai.y+=ai.vy;ai.x=Math.max(ai.radius,Math.min(canvas.width-ai.radius,ai.x));
+ai.y=Math.max(ai.radius,Math.min(canvas.height-ai.radius,ai.y));
+if(ai.hasBall&&ai.x>canvas.width/2)shootBall(ai,1);if(ai.hasBall){ball.x=ai.x;ball.y=ai.y}}
+function updateBall(){if(ball.possessed)return;ball.vx*=BALL_FRICTION;ball.vy*=BALL_FRICTION;
+if(Math.abs(ball.vx)<0.1)ball.vx=0;if(Math.abs(ball.vy)<0.1)ball.vy=0;
+ball.x+=ball.vx;ball.y+=ball.vy;
+if(ball.x-ball.radius<0||ball.x+ball.radius>canvas.width){ball.vx*=-0.8;
+ball.x=Math.max(ball.radius,Math.min(canvas.width-ball.radius,ball.x))}
+if(ball.y-ball.radius<0||ball.y+ball.radius>canvas.height){ball.vy*=-0.8;
+ball.y=Math.max(ball.radius,Math.min(canvas.height-ball.radius,ball.y))}}
+function checkBallPossession(){if(ball.possessed)return;
+const pd=Math.sqrt((player.x-ball.x)**2+(player.y-ball.y)**2);
+const ad=Math.sqrt((ai.x-ball.x)**2+(ai.y-ball.y)**2);
+if(pd<player.radius+ball.radius+5&&pd<=ad)takeBall(player);
+else if(ad<ai.radius+ball.radius+5)takeBall(ai)}
+function takeBall(c){ball.possessed=true;ball.possessor=c;c.hasBall=true;ball.vx=0;ball.vy=0;
+if(c===player)addMeowmentumChain(1,"Ball!");else resetMeowmentumChain()}
+function shootBall(c,pm){if(!c.hasBall)return;const tx=c===player?canvas.width:0,
+ty=canvas.height/2+(Math.random()-0.5)*(canvas.height*0.3),dx=tx-c.x,dy=ty-c.y,
+d=Math.sqrt(dx*dx+dy*dy),p=8*pm;ball.vx=(dx/d)*p;ball.vy=(dy/d)*p;
+const spd=Math.sqrt(ball.vx**2+ball.vy**2);if(spd>BALL_MAX_SPEED){
+ball.vx=(ball.vx/spd)*BALL_MAX_SPEED;ball.vy=(ball.vy/spd)*BALL_MAX_SPEED}
+ball.possessed=false;ball.possessor=null;c.hasBall=false}
+function checkGoals(){const gw=20,gh=canvas.height*0.3;
+if(ball.x<gw&&ball.y>canvas.height/2-gh/2&&ball.y<canvas.height/2+gh/2&&!ball.possessed){
+gameState.awayScore++;showMessage("😿 AI Scored!");resetBall();resetMeowmentumChain()}
+if(ball.x>canvas.width-gw&&ball.y>canvas.height/2-gh/2&&ball.y<canvas.height/2+gh/2&&!ball.possessed){
+gameState.homeScore++;showMessage("🎉 GOAL!!!");addMeowmentumChain(5,"GOAL!");resetBall()}}
+function resetBall(){ball.x=canvas.width/2;ball.y=canvas.height/2;ball.vx=0;ball.vy=0;
+ball.possessed=false;ball.possessor=null;player.hasBall=false;ai.hasBall=false;
+player.x=canvas.width*0.2;player.y=canvas.height/2;ai.x=canvas.width*0.8;ai.y=canvas.height/2}
+function updateMeowmentum(dt){const t=Date.now()-gameState.lastActionTime;
+if(t>5000&&gameState.meowmentumChain>0){gameState.meowmentumChain-=0.5*dt;
+if(gameState.meowmentumChain<0)gameState.meowmentumChain=0}
+let nl=0;for(let i=0;i<MEOWMENTUM_THRESHOLDS.length;i++)
+if(gameState.meowmentumChain>=MEOWMENTUM_THRESHOLDS[i])nl=i+1;
+if(nl!==gameState.meowmentumLevel){gameState.meowmentumLevel=nl;
+if(nl>0)showMessage(`✨ Level ${nl}! +${getMeowmentumBonus()*100}%`)}}
+function addMeowmentumChain(p,a){gameState.meowmentumChain+=p;gameState.lastActionTime=Date.now()}
+function resetMeowmentumChain(){gameState.meowmentumChain=0;gameState.meowmentumLevel=0}
+function getMeowmentumBonus(){const b=[0,0.05,0.10,0.15,0.20,0.25];return b[gameState.meowmentumLevel]||0}
+function endMatch(){gameState.matchInProgress=false;let r="";
+if(gameState.homeScore>gameState.awayScore)r="🎉 YOU WIN!";
+else if(gameState.homeScore<gameState.awayScore)r="😿 YOU LOSE!";else r="🤝 DRAW!";
+const msg=`⏱️ TIME UP!\n${r}\n${gameState.homeScore}-${gameState.awayScore}\nTap to restart`;
+showMessage(msg);canvas.addEventListener('touchstart',()=>window.location.reload(),{once:true})}
+function showMessage(m){if(messageTimeout)clearTimeout(messageTimeout);
+const me=document.getElementById('message');me.textContent=m;me.classList.add('show');
+messageTimeout=setTimeout(()=>{me.classList.remove('show');messageTimeout=null},2500)}
+function updateUI(){document.getElementById('score').textContent=
+`${gameState.homeScore} - ${gameState.awayScore}`;const min=Math.floor(gameState.matchTime/60),
+sec=Math.floor(gameState.matchTime%60);document.getElementById('time').textContent=
+`${min}:${sec.toString().padStart(2,'0')}`;
+document.getElementById('chain').textContent=Math.floor(gameState.meowmentumChain);
+document.getElementById('bonus').textContent=`+${(getMeowmentumBonus()*100).toFixed(0)}%`;
+const mc=MEOWMENTUM_THRESHOLDS[MEOWMENTUM_THRESHOLDS.length-1],
+pct=Math.min(100,(gameState.meowmentumChain/mc)*100);
+document.getElementById('meowFill').style.width=`${pct}%`;
+document.getElementById('meowLevel').textContent=`Level ${gameState.meowmentumLevel}`;
+const sp=(player.stamina/STAMINA_MAX)*100;
+document.getElementById('staminaFill').style.height=`${sp}%`}
+function render(){ctx.fillStyle='#88dd88';ctx.fillRect(0,0,canvas.width,canvas.height);
+drawField();drawGoals();drawBall();drawCat(player);drawCat(ai);
+if(gameState.meowmentumLevel>0)drawMeowmentumEffect(player)}
+function drawField(){ctx.strokeStyle='white';ctx.lineWidth=2;ctx.beginPath();
+ctx.moveTo(canvas.width/2,0);ctx.lineTo(canvas.width/2,canvas.height);ctx.stroke();
+ctx.beginPath();ctx.arc(canvas.width/2,canvas.height/2,Math.min(canvas.width,canvas.height)*0.15,0,Math.PI*2);
+ctx.stroke()}
+function drawGoals(){const gw=20,gh=canvas.height*0.3;ctx.fillStyle='rgba(255, 255, 255, 0.8)';
+ctx.fillRect(0,canvas.height/2-gh/2,gw,gh);
+ctx.fillRect(canvas.width-gw,canvas.height/2-gh/2,gw,gh)}
+function drawBall(){ctx.fillStyle='white';ctx.strokeStyle='#333';ctx.lineWidth=2;
+ctx.beginPath();ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);ctx.fill();ctx.stroke()}
+function drawCat(c){ctx.fillStyle=c.color;ctx.strokeStyle='#333';ctx.lineWidth=2;
+ctx.beginPath();ctx.arc(c.x,c.y,c.radius,0,Math.PI*2);ctx.fill();ctx.stroke();
+ctx.fillStyle='white';ctx.beginPath();ctx.arc(c.x,c.y+3,c.radius*0.6,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#333';ctx.beginPath();ctx.arc(c.x-5,c.y,3,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.arc(c.x+5,c.y,3,0,Math.PI*2);ctx.fill();ctx.fillStyle=c.color;
+ctx.beginPath();ctx.moveTo(c.x-8,c.y-c.radius);ctx.lineTo(c.x-12,c.y-c.radius-8);
+ctx.lineTo(c.x-4,c.y-c.radius+2);ctx.fill();ctx.stroke();ctx.beginPath();
+ctx.moveTo(c.x+8,c.y-c.radius);ctx.lineTo(c.x+12,c.y-c.radius-8);
+ctx.lineTo(c.x+4,c.y-c.radius+2);ctx.fill();ctx.stroke()}
+function drawMeowmentumEffect(c){const t=Date.now()*0.005,
+lvls=[{color:'rgba(102, 126, 234, 0.3)',size:1.2},{color:'rgba(102, 126, 234, 0.4)',size:1.4},
+{color:'rgba(118, 75, 162, 0.5)',size:1.6},{color:'rgba(255, 215, 0, 0.6)',size:1.8},
+{color:'rgba(255, 105, 180, 0.7)',size:2.0}],l=lvls[gameState.meowmentumLevel-1];
+if(l){ctx.strokeStyle=l.color;ctx.lineWidth=3;ctx.beginPath();
+ctx.arc(c.x,c.y,c.radius*l.size*(1+Math.sin(t)*0.1),0,Math.PI*2);ctx.stroke()}}
+    </script>
+</body>
+</html>
