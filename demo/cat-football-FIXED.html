@@ -112,8 +112,8 @@ function resizeCanvas(){const c=canvas.parentElement;canvas.width=c.clientWidth;
 resizeCanvas();window.addEventListener('resize',resizeCanvas);
 const MATCH_DURATION=180,BALL_RADIUS=8,CAT_RADIUS=15,BALL_MAX_SPEED=12,CAT_BASE_SPEED=3,
 CAT_SPRINT_MULTIPLIER=1.8,STAMINA_MAX=100,STAMINA_DRAIN_RATE=15,STAMINA_REGEN_RATE=10,
-BALL_FRICTION=0.97,MEOWMENTUM_THRESHOLDS=[3,6,10,15,20];
-let gameStarted=false,lastFrameTime=Date.now(),messageTimeout=null;
+BALL_FRICTION=0.97,MEOWMENTUM_THRESHOLDS=[3,6,10,15,20],AI_SHOOT_DELAY=0.7;
+let gameStarted=false,lastFrameTime=Date.now(),messageTimeout=null,aiShootCooldown=0;
 let gameState={matchTime:MATCH_DURATION,homeScore:0,awayScore:0,matchInProgress:true,
 meowmentumChain:0,meowmentumLevel:0,lastActionTime:Date.now()};
 let ball={x:0,y:0,vx:0,vy:0,radius:BALL_RADIUS,possessed:false,possessor:null};
@@ -156,7 +156,7 @@ function gameLoop(){if(!gameStarted)return;update();render();requestAnimationFra
 function update(){if(!gameState.matchInProgress)return;
 const now=Date.now(),dt=(now-lastFrameTime)/1000;lastFrameTime=now;
 gameState.matchTime-=dt;if(gameState.matchTime<=0){gameState.matchTime=0;endMatch()}
-updatePlayerInput(dt);updateAI();updateBall();checkBallPossession();checkGoals();
+updatePlayerInput(dt);updateAI(dt);updateBall();checkBallPossession();checkGoals();
 updateMeowmentum(dt);updateUI()}
 function updatePlayerInput(dt){let mx=joystickInput.x,my=joystickInput.y,cs=player.speed;
 if(isSprinting&&player.stamina>0){cs*=CAT_SPRINT_MULTIPLIER;
@@ -167,11 +167,12 @@ player.x+=player.vx;player.y+=player.vy;
 player.x=Math.max(player.radius,Math.min(canvas.width-player.radius,player.x));
 player.y=Math.max(player.radius,Math.min(canvas.height-player.radius,player.y));
 if(player.hasBall){ball.x=player.x;ball.y=player.y}}
-function updateAI(){const dx=ball.x-ai.x,dy=ball.y-ai.y,d=Math.sqrt(dx*dx+dy*dy);
+function updateAI(dt){const dx=ball.x-ai.x,dy=ball.y-ai.y,d=Math.sqrt(dx*dx+dy*dy);
 if(d>5){ai.vx=(dx/d)*ai.speed;ai.vy=(dy/d)*ai.speed}else{ai.vx=0;ai.vy=0}
 ai.x+=ai.vx;ai.y+=ai.vy;ai.x=Math.max(ai.radius,Math.min(canvas.width-ai.radius,ai.x));
 ai.y=Math.max(ai.radius,Math.min(canvas.height-ai.radius,ai.y));
-if(ai.hasBall)shootBall(ai,1);if(ai.hasBall){ball.x=ai.x;ball.y=ai.y}}
+if(ai.hasBall){aiShootCooldown-=dt;if(aiShootCooldown<=0){shootBall(ai,1);aiShootCooldown=AI_SHOOT_DELAY}
+ball.x=ai.x;ball.y=ai.y}}
 function updateBall(){if(ball.possessed)return;ball.vx*=BALL_FRICTION;ball.vy*=BALL_FRICTION;
 if(Math.abs(ball.vx)<0.1)ball.vx=0;if(Math.abs(ball.vy)<0.1)ball.vy=0;
 ball.x+=ball.vx;ball.y+=ball.vy;
@@ -187,7 +188,7 @@ else if(ad<ai.radius+ball.radius+5)takeBall(ai)}
 function takeBall(c){ball.possessed=true;ball.possessor=c;c.hasBall=true;ball.vx=0;ball.vy=0;
 if(c===player)addMeowmentumChain(1,"Ball!");else resetMeowmentumChain()}
 function shootBall(c,pm){if(!c.hasBall)return;const tx=c===player?canvas.width:0,
-ty=canvas.height/2+(Math.random()-0.5)*(canvas.height*0.3),dx=tx-c.x,dy=ty-c.y,
+ty=canvas.height/2+(Math.random()-0.5)*(canvas.height*0.15),dx=tx-c.x,dy=ty-c.y,
 d=Math.sqrt(dx*dx+dy*dy),p=8*pm;ball.vx=(dx/d)*p;ball.vy=(dy/d)*p;
 const spd=Math.sqrt(ball.vx**2+ball.vy**2);if(spd>BALL_MAX_SPEED){
 ball.vx=(ball.vx/spd)*BALL_MAX_SPEED;ball.vy=(ball.vy/spd)*BALL_MAX_SPEED}
